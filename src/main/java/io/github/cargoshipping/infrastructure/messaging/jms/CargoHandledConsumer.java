@@ -1,0 +1,39 @@
+package io.github.cargoshipping.infrastructure.messaging.jms;
+
+import io.github.cargoshipping.application.CargoInspectionService;
+import io.github.cargoshipping.domain.model.cargo.TrackingId;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javax.jms.Message;
+import javax.jms.MessageListener;
+import javax.jms.TextMessage;
+
+/**
+ * Consumes JMS messages and delegates notification of misdirected
+ * cargo to the tracking service.
+ * <p>
+ * This is a programmatic hook into the JMS infrastructure to
+ * make cargo inspection message-driven.
+ */
+public class CargoHandledConsumer implements MessageListener {
+
+    private CargoInspectionService cargoInspectionService;
+    private final Log logger = LogFactory.getLog(getClass());
+
+    @Override
+    public void onMessage(final Message message) {
+        try {
+            final TextMessage textMessage = (TextMessage) message;
+            final String trackingidString = textMessage.getText();
+
+            cargoInspectionService.inspectCargo(new TrackingId(trackingidString));
+        } catch (Exception e) {
+            logger.error(e, e);
+        }
+    }
+
+    public void setCargoInspectionService(CargoInspectionService cargoInspectionService) {
+        this.cargoInspectionService = cargoInspectionService;
+    }
+}
